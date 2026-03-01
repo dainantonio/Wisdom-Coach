@@ -1,9 +1,8 @@
 [build]
   # This tells Netlify your HTML is in the main folder
   publish = "."
-  # This tells Netlify where your backend code is
-  functions = "netlify/functions"
+"netlify/functions"
 
 [functions]
   # This ensures Netlify installs your dependencies before running
-  node_bundle = true
+  node_bundle = "nft"
