@@ -4,6 +4,6 @@
   "description": "Wisdom Coach web app",
   "main": "index.html",
   "dependencies": {
-    "@google/genai": "^0.1.2"
+    "@google/genai": "^1.3.0"
   }
 }
