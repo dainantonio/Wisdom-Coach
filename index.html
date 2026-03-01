@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wisdom Coach</title>
+    <!-- Using Tailwind CSS for clean, responsive, and modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* A fun, subtle dotted background pattern for a kid-friendly feel */
+        body {
+            background-color: #f0f9ff;
+            background-image: radial-gradient(#bae6fd 2px, transparent 2px);
+            background-size: 30px 30px;
+        }
+        
+        /* Custom softer scrollbar for the chat window */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #93c5fd; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #60a5fa; 
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col font-sans overflow-hidden text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-yellow-300 text-yellow-900 p-4 shadow-md flex items-center justify-center gap-3 z-10 shrink-0 border-b-4 border-yellow-400">
+        <!-- Friendly Sun Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-600">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path>
+            <path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path>
+            <path d="m19.07 4.93-1.41 1.41"></path>
+        </svg>
+        <h1 class="text-3xl font-extrabold tracking-wide">Wisdom Coach</h1>
+    </header>
+
+    <!-- Chat Window -->
+    <main id="chat-window" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4">
+        <!-- Initial Welcome Message from the Coach -->
+        <div class="flex justify-start w-full animate-fade-in-up">
+            <div class="bg-white p-4 sm:p-5 rounded-3xl rounded-tl-none shadow-sm max-w-[85%] sm:max-w-[70%] border-2 border-yellow-300">
+                <p class="text-lg font-medium text-gray-700">Hi there! 👋 I'm your Wisdom Coach. I'm here to listen and help.</p>
+                <p class="text-lg font-medium text-gray-700 mt-2">What happened today?</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Input Area -->
+    <footer class="bg-white p-4 sm:p-6 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.1)] z-10 shrink-0 border-t-2 border-blue-100">
+        <form id="chat-form" class="max-w-4xl mx-auto flex gap-3">
+            <input 
+                type="text" 
+                id="user-input" 
+                placeholder="What happened today?" 
+                autocomplete="off"
+                class="flex-1 border-2 border-blue-200 bg-blue-50 rounded-full px-6 py-4 focus:outline-none focus:border-blue-500 focus:bg-white text-lg transition-colors shadow-inner"
+            >
+            <button 
+                type="submit" 
+                class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-full px-8 py-4 font-bold text-xl shadow-lg transition-transform transform hover:-translate-y-1 active:translate-y-0"
+            >
+                Send
+            </button>
+        </form>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const chatWindow = document.getElementById('chat-window');
+
+        // Helper function to create and append message bubbles to the chat window
+        function appendMessage(message, sender) {
+            const messageContainer = document.createElement('div');
+            
+            // Align user messages to the right, coach messages to the left
+            const alignmentClass = sender === 'user' ? 'justify-end' : 'justify-start';
+            messageContainer.className = `flex w-full ${alignmentClass} mb-2`;
+
+            const bubble = document.createElement('div');
+            
+            // Style differently based on who is sending the message
+            if (sender === 'user') {
+                bubble.className = 'bg-blue-500 text-white p-4 sm:p-5 rounded-3xl rounded-tr-none shadow-md max-w-[85%] sm:max-w-[70%] text-lg font-medium border-2 border-blue-600';
+            } else {
+                bubble.className = 'bg-white text-gray-700 p-4 sm:p-5 rounded-3xl rounded-tl-none shadow-sm max-w-[85%] sm:max-w-[70%] text-lg font-medium border-2 border-yellow-300';
+            }
+            
+            bubble.textContent = message;
+            messageContainer.appendChild(bubble);
+            chatWindow.appendChild(messageContainer);
+
+            // Smoothly scroll to the bottom of the chat window
+            chatWindow.scrollTo({
+                top: chatWindow.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        // The main function for handling the user's input and preparing for backend integration
+        function fetchAdvice(userMessage) {
+            // 1. Append the user's message to the chat window immediately
+            appendMessage(userMessage, 'user');
+
+            // Show a temporary "Thinking..." bubble while waiting for the server
+            appendMessage("...", 'coach');
+            const loadingBubble = chatWindow.lastElementChild;
+
+            // 2. Fetch call to your secure Netlify Serverless Function
+            fetch('/.netlify/functions/getAdvice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userMessage })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Server returned an error');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Remove the loading bubble
+                loadingBubble.remove();
+                
+                // Append the response from your backend to the chat
+                if (data.advice) {
+                    appendMessage(data.advice, 'coach');
+                } else {
+                    appendMessage("Oops! I got a little mixed up. Can we try again?", 'coach');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching advice:', error);
+                loadingBubble.remove();
+                appendMessage("Oops! I am having trouble connecting to my thoughts right now. Please try again later.", 'coach');
+            });
+        }
+
+        // Listen for the form submission (either clicking "Send" or pressing Enter)
+        chatForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the page from refreshing
+            
+            const message = userInput.value.trim();
+            
+            if (message !== '') {
+                // Call our function with the text from the input
+                fetchAdvice(message);
+                
+                // Clear the input field for the next message
+                userInput.value = '';
+                
+                // Keep focus on the input field for continuous typing
+                userInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>
