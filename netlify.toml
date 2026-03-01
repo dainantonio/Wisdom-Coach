@@ -1,7 +1,7 @@
 [build]
   # This tells Netlify your HTML is in the main folder
   publish = "."
-"netlify/functions"
+
 
 [functions]
   # This ensures Netlify installs your dependencies before running
